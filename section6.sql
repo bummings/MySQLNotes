@@ -23,6 +23,8 @@ CREATE TABLE orders (
   FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
+
+
 INSERT INTO customers (first_name, last_name, email) 
 VALUES ('Boy', 'George', 'george@gmail.com'),
        ('George', 'Michael', 'gm@gmail.com'),
@@ -69,6 +71,8 @@ SELECT * FROM customers, orders;
 the customer ids, right?  Thus providing us with a table of all orders, connected properly. */
 
 
+/* Also worth noting that dot notation is a thing and can be used to decree from different columns in different tables, like as different methods on a javascript object, etc etc */
+
 /*   I M P L I C I T  I N N E R  J O I N    */
 SELECT * FROM customers, orders WHERE customers.id = orders.customer_id;
 
@@ -87,3 +91,153 @@ JOIN orders
 SELECT first_name, last_name, order_date, amount FROM customers JOIN orders ON customers.id = orders.customer_id;
 /*  Select something, join it with something else, on this condition. */
 
+
+/* Formatted a bit more succinctly */
+SELECT first_name, last_name, order_date, amount
+FROM customers
+JOIN orders
+  ON customers.id = orders.customer_id
+GROUP BY orders.customer_id;
+
+SELECT first_name, last_name, order_date, amount
+FROM customers
+JOIN orders
+  ON customers.id = orders.customer_id
+GROUP BY orders.customer_id;
+
+
+/* AY IF YOU'RE EXPERIENCING MYSQL ERROR 1055 */
+SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+/* This is a setting that's messing you up with MySQL defaults post v5.6 that is requiring all fields of the joins in question, which somehow is a good idea?  */
+
+/* SO.
+For an idiotic example, let's add the total of all orders. */
+
+SELECT first_name, 
+       last_name, 
+       SUM(amount) AS total_spent 
+FROM customers 
+LEFT JOIN orders 
+  ON customers.id = orders.customer_id 
+GROUP BY orders.customer_id
+ORDER BY total_spent DESC;
+
+/* Use IFNULL to display a number, 0 for example, 
+when displaying a value of NULL */
+SELECT first_name, 
+       last_name, 
+       IFNULL(SUM(amount), 0) AS total_spent
+FROM customers 
+LEFT JOIN orders
+  ON customers.id = orders.customer_id 
+GROUP BY orders.customer_id;
+ORDER BY total_spent ASC;
+
+/* also, never realized you could ORDER BY with an alias (total_spent)- that's pretty hype */
+
+/* IN SUMMARY THUS FAR
+   INNER JOINS-  only returning the exact overlap, the specific conditions met, nothing else.
+   LEFT JOINS- select everything from the left side along with any matching records from the right side!
+ */
+
+
+/* The foreign key that is connected with a customer ID will prevent you from deleting the order or customer outright, because they're both linked together.
+
+In order to provide the functionality to delete a customer and, in doing so, the orders associated with them, we add a line to our ORDERS table schema- */
+
+CREATE TABLE orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_date DATE,
+  amount DECIMAL (8,2),
+  customer_id INT,
+  FOREIGN KEY (customer_id)
+    REFERENCES customers(id)
+    ON DELETE CASCADE
+);
+
+/* ON DELETE CASCADE will cascade that deletion down to the individual orders, etc etc */
+
+
+
+/* E X E R C I S E S  */
+
+
+
+
+CREATE TABLE students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  first_name VARCHAR (50)
+);
+
+CREATE TABLE papers (  
+  title VARCHAR (500),
+  grade INT,
+  student_id INT,
+  FOREIGN KEY (student_id) REFERENCES students(id)
+);
+
+INSERT INTO students (first_name) VALUES
+('Caleb'), ('Samantha'), ('Raj'), ('Carlos'), ('Lisa');
+
+INSERT INTO papers (student_id, title, grade) VALUES 
+(1, 'My First Book Report', 60),
+(1, 'My Second Book Report', 75),
+(2, 'Russian Lit Thru the Ages', 94),
+(2, 'De Montaigne and the Essay', 98),
+(4, 'Borges and Magical Realism', 89);
+
+/* print papers only from students who have submitted */
+
+SELECT first_name, 
+       title, 
+       grade
+FROM students
+INNER JOIN papers
+  ON students.id = papers.student_id
+ORDER BY grade DESC;
+
+
+/* print all students regardless if paper was submitted or not */
+
+SELECT first_name, 
+       title, 
+       grade
+FROM students
+LEFT JOIN papers
+  ON students.id = papers.student_id;
+
+
+/* print same as above, though with a 0 representing a null value */
+
+SELECT first_name, 
+       IFNULL(title, 'MISSING'), 
+       IFNULL(grade, 0)
+FROM students
+LEFT JOIN papers
+  ON students.id = papers.student_id;
+
+
+/* print each student's average paper grade */
+
+SELECT first_name,
+       IFNULL(AVG(grade), 0) AS average
+FROM students
+LEFT JOIN papers
+  ON students.id = papers.student_id
+GROUP BY students.id;
+ORDER BY grade DESC;
+
+
+/* print the same as above but with a passing_status column: PASSING / FAILING */
+
+SELECT first_name,
+       IFNULL(AVG(grade), 0) AS average,
+       CASE
+          WHEN AVG(grade) >= 75 THEN 'PASSING'
+          ELSE 'FAILING'
+       END AS passing_status
+FROM students
+LEFT JOIN papers
+  ON students.id = papers.student_id
+GROUP BY students.id
+ORDER BY average DESC;
