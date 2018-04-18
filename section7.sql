@@ -99,8 +99,70 @@ WHERE reviewers.id < 3;
 -- the inner join displays 47 results. left join, 49. 
 -- these additionals will be all NULL, too.
 
-SELECT title
+SELECT title AS unreviewed_series
 FROM series
 LEFT JOIN reviews
   ON series.id = reviews.series_id
 WHERE rating IS NULL;
+
+
+-- challenge 5: display a table of genre and average rating, ascending order.
+SELECT genre,
+       ROUND(AVG(rating), 2)
+FROM series
+JOIN reviews
+  ON series.id = reviews.series_id
+  GROUP BY genre;
+
+-- BY THE BYE, you're probably forgetting this:
+-- to update an entry on a table:
+-- UPDATE table_name SET prop = "new val" WHERE = "old val";
+
+
+-- challenge 6: STATS- display a table which includes: first_name, last_name, number of reviews, weakest rating, strongest rating, average rating and status (inactive for 0 reviews, duh)
+
+-- this will be a left join because we want all the information from the left table, i.e. the users: first_name, last_name.
+
+SELECT first_name,
+       last_name,
+       IFNULL(COUNT(rating), 0) AS COUNT,
+       IFNULL(MIN(rating), 0) AS MIN,
+       IFNULL(MAX(rating), 0) AS MAX,
+       ROUND(IFNULL(AVG(rating), 0), 2) AS AVG,
+       IF(COUNT(rating) >= 1, 'ACTIVE', 'INACTIVE') AS STATUS
+FROM reviewers
+LEFT JOIN reviews
+  ON reviewers.id = reviews.reviewer_id
+GROUP BY reviewers.id;
+
+-- added functionality for a 'power user' using case statements:
+
+SELECT first_name,
+       last_name,
+       IFNULL(COUNT(rating), 0) AS COUNT,
+       IFNULL(MIN(rating), 0) AS MIN,
+       IFNULL(MAX(rating), 0) AS MAX,
+       ROUND(IFNULL(AVG(rating), 0), 2) AS AVG,
+       CASE
+        WHEN COUNT(rating) >= 10 THEN 'POWER USER'
+        WHEN COUNT(rating) > 0 THEN 'ACTIVE'
+        ELSE 'INACTIVE'
+      END AS STATUS
+    FROM REVIEWERS
+    LEFT JOIN reviews
+      ON reviewers.id = reviews.reviewer_id
+    GROUP BY reviewers.id;
+
+
+
+
+-- challenge 7: title, all ratings, reviewer's full name, arrange by title:
+SELECT title,
+       rating,
+       CONCAT(first_name, ' ', last_name) AS reviewer
+FROM reviewers
+INNER JOIN reviews
+  ON reviewers.id = reviews.reviewer_id
+INNER JOIN series
+  ON series.id = reviews.series_id
+ORDER BY title;
