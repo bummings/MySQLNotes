@@ -1,3 +1,9 @@
+/* AY IF YOU'RE EXPERIENCING MYSQL ERROR 1055 */
+SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+/* This is a setting that's messing you up with MySQL defaults post v5.6 that is requiring all fields of the joins in question, which somehow is a good idea?  */
+
+
+
 /* primary keys & foreign keys */
 /* using the example of customers and orders, one to many, so on- */
 
@@ -106,9 +112,6 @@ JOIN orders
 GROUP BY orders.customer_id;
 
 
-/* AY IF YOU'RE EXPERIENCING MYSQL ERROR 1055 */
-SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
-/* This is a setting that's messing you up with MySQL defaults post v5.6 that is requiring all fields of the joins in question, which somehow is a good idea?  */
 
 /* SO.
 For an idiotic example, let's add the total of all orders. */
