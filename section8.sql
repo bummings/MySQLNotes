@@ -150,3 +150,14 @@ WHERE image_url IS NULL;
 
 -- remember: thing = NULL is not valid; you gotta: thing IS NULL;
 
+
+
+-- 4. Filter out who has the most likes on a single photo
+
+SELECT username, photo_id
+FROM users
+LEFT JOIN likes
+    ON users.id = likes.photo_id
+GROUP BY likes.photo_id
+LIMIT 5;
+
