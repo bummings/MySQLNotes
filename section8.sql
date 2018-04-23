@@ -154,10 +154,34 @@ WHERE image_url IS NULL;
 
 -- 4. Filter out who has the most likes on a single photo
 
-SELECT username, photo_id
-FROM users
-LEFT JOIN likes
-    ON users.id = likes.photo_id
-GROUP BY likes.photo_id
-LIMIT 5;
+SELECT username,
+       photos.id, 
+       photos.image_url, 
+       COUNT(*) AS likestotal
+FROM photos
+INNER JOIN likes
+    ON likes.photo_id = photos.id
+INNER JOIN users
+    ON photos.user_id = users.id 
+GROUP BY photos.id
+ORDER BY likestotal DESC
+LIMIT 1;
+--jesus fucking christ
 
+
+-- 5. How many times does the average user post
+
+SELECT (SELECT COUNT(*) FROM photos) / (SELECT COUNT(*) FROM users);
+
+
+
+-- 6. What are the 5 most commonly used hashtags
+
+SELECT tags.tag_name,
+       COUNT(*) AS total
+FROM photo_tags
+JOIN tags
+    ON photo_tags.tag_id = tags.id
+GROUP BY tags.id 
+ORDER BY total DESC
+LIMIT 5;
